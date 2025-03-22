@@ -13,7 +13,7 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-full bg-insurance-600 flex items-center justify-center">
                 <span className="text-white font-bold text-xl">LI</span>
               </div>
-              <span className="font-semibold text-xl tracking-tight text-insurance-800">LifeInsure</span>
+              <span className="font-semibold text-xl tracking-tight text-insurance-800">PolicyVault</span>
             </Link>
             <p className="text-gray-600 mb-4">
               Ensuring financial security for your loved ones when they need it most.

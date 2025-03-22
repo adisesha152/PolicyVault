@@ -40,8 +40,8 @@ const NavbarPublic = () => {
         <nav className="hidden md:flex items-center space-x-8">
           <Link to="/" className="text-gray-700 hover:text-insurance-600 transition-colors">Home</Link>
           <Link to="/#features" className="text-gray-700 hover:text-insurance-600 transition-colors">Features</Link>
-          <Link to="/#about" className="text-gray-700 hover:text-insurance-600 transition-colors">About</Link>
           <Link to="/#how-it-works" className="text-gray-700 hover:text-insurance-600 transition-colors">How It Works</Link>
+          <Link to="/#about" className="text-gray-700 hover:text-insurance-600 transition-colors">About</Link>
           
           <div className="flex items-center space-x-4">
             <Link to="/login">
@@ -68,8 +68,8 @@ const NavbarPublic = () => {
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
             <Link to="/" className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>Home</Link>
             <Link to="/#features" className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>Features</Link>
-            <Link to="/#about" className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>About</Link>
             <Link to="/#how-it-works" className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>How It Works</Link>
+            <Link to="/#about" className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>About</Link>
             
             <Link to="/login" className="w-full" onClick={closeMenu}>
               <Button className="bg-insurance-600 hover:bg-insurance-700 text-white w-full">
