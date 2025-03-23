@@ -1,10 +1,11 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { UserPlus, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { PolicyService } from '../services/PolicyService';
+import { useAuth } from '../context/AuthContext'; // Fix the import path
 import { 
   Form,
   FormField,
@@ -26,6 +27,9 @@ const formSchema = z.object({
 });
 
 const NomineeForm = ({ onClose, onAddNominee, policies }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth(); // Get the current user
+  
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,30 +41,42 @@ const NomineeForm = ({ onClose, onAddNominee, policies }) => {
     },
   });
 
-  const onSubmit = (data) => {
-    // Generate nominee ID
-    const nomineeId = 'NOM-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+  const onSubmit = async (data) => {
+    setIsSubmitting(true);
     
-    // Create new nominee object
-    const newNominee = {
-      id: nomineeId,
-      name: data.name,
-      relationship: data.relationship,
-      email: data.email,
-      phone: data.phone,
-      policyId: data.policyId,
-      status: 'Active',
-      verified: false,
-    };
-    
-    // Add nominee via callback
-    onAddNominee(newNominee);
-    toast.success(`Nominee ${data.name} added successfully`);
-    onClose();
+    try {
+      console.log('Selected policy ID:', data.policyId);
+      
+      // Create new nominee object with the policy ObjectId
+      const newNominee = {
+        name: data.name,
+        relationship: data.relationship,
+        email: data.email,
+        phone: data.phone,
+        policyId: data.policyId, // MongoDB ObjectId reference
+        status: 'Active',
+        verified: false,
+      };
+      
+      console.log('Submitting nominee to backend:', newNominee);
+      
+      // Add nominee via API
+      const savedNominee = await PolicyService.addNominee(newNominee);
+      
+      // Add nominee via callback for state update
+      onAddNominee(savedNominee);
+      toast.success(`Nominee ${data.name} added successfully`);
+      onClose();
+    } catch (error) {
+      toast.error(error.message || 'Failed to add nominee. Please try again.');
+      console.error('Nominee add error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Card className="p-6 max-w-2xl mx-auto">
+    <Card className="p-6 max-w-2xl mx-auto border-0 shadow-md">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-3">
           <div className="p-2 rounded-full bg-insurance-50">
@@ -87,7 +103,7 @@ const NomineeForm = ({ onClose, onAddNominee, policies }) => {
                 <FormItem>
                   <FormLabel>Nominee Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input className="border-input focus:ring-0" placeholder="John Doe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -101,7 +117,7 @@ const NomineeForm = ({ onClose, onAddNominee, policies }) => {
                 <FormItem>
                   <FormLabel>Relationship</FormLabel>
                   <FormControl>
-                    <Input placeholder="Spouse, Child, etc." {...field} />
+                    <Input className="border-input focus:ring-0" placeholder="Spouse, Child, etc." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,7 +131,7 @@ const NomineeForm = ({ onClose, onAddNominee, policies }) => {
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="nominee@example.com" {...field} />
+                    <Input className="border-input focus:ring-0" type="email" placeholder="nominee@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -129,7 +145,7 @@ const NomineeForm = ({ onClose, onAddNominee, policies }) => {
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="+1234567890" {...field} />
+                    <Input className="border-input focus:ring-0" placeholder="+1234567890" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -144,15 +160,24 @@ const NomineeForm = ({ onClose, onAddNominee, policies }) => {
                   <FormLabel>Select Policy</FormLabel>
                   <FormControl>
                     <select 
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-10 w-full rounded-md border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
                       {...field}
                     >
                       {policies.length > 0 ? (
-                        policies.map(policy => (
-                          <option key={policy.id} value={policy.id}>
-                            {policy.name} - {policy.id}
-                          </option>
-                        ))
+                        policies.map(policy => {
+                          // Use MongoDB's _id if available, otherwise use id
+                          const policyId = policy._id || policy.id;
+                          // Create a display version of the ID for clarity
+                          const displayId = typeof policyId === 'string' && policyId.length > 8 
+                            ? policyId.substring(0, 8) + '...' 
+                            : policyId;
+                            
+                          return (
+                            <option key={policyId} value={policyId}>
+                              {policy.name} - {displayId}
+                            </option>
+                          );
+                        })
                       ) : (
                         <option value="" disabled>No policies available</option>
                       )}
@@ -169,15 +194,16 @@ const NomineeForm = ({ onClose, onAddNominee, policies }) => {
               variant="outline" 
               type="button"
               onClick={onClose}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button 
               type="submit" 
               className="bg-insurance-600 hover:bg-insurance-700 text-white"
-              disabled={policies.length === 0}
+              disabled={isSubmitting || policies.length === 0}
             >
-              Add Nominee
+              {isSubmitting ? 'Adding...' : 'Add Nominee'}
             </Button>
           </div>
         </form>

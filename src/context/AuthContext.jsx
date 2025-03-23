@@ -1,6 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from "sonner";
+import { AuthService } from '../services/AuthService';
+import { toast } from 'sonner';
 
 const AuthContext = createContext();
 
@@ -8,103 +8,102 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [nomineeMode, setNomineeMode] = useState(false);
 
+  // Check if user is authenticated on initial load
   useEffect(() => {
-    // Check if user is stored in localStorage on mount
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const checkAuth = async () => {
+      try {
+        const authenticated = AuthService.isAuthenticated();
+        setIsAuthenticated(authenticated);
+        
+        if (authenticated) {
+          try {
+            // Fetch user data from backend
+            const userData = await AuthService.getUserProfile();
+            setUser(userData);
+          } catch (error) {
+            console.error('Error fetching user profile:', error);
+            // Fallback to a basic user object
+            setUser({ name: 'User', id: 'default-user' });
+          }
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    // Check if in nominee mode
-    const isNomineeMode = localStorage.getItem('nomineeMode') === 'true';
-    setNomineeMode(isNomineeMode);
-    
-    setLoading(false);
+    checkAuth();
   }, []);
 
-  const login = (credentials) => {
-    // Mock login functionality
-    setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      // For demo, we'll accept any email/password with basic validation
-      if (!credentials.email || !credentials.password) {
-        toast.error('Please enter both email and password');
-        setLoading(false);
-        return false;
-      }
+  const login = async (credentials) => {
+    try {
+      setLoading(true);
+      const userData = await AuthService.login(credentials);
       
-      // Create mock user data
-      const userData = {
-        id: 'usr_' + Math.random().toString(36).substring(2, 9),
-        name: credentials.email.split('@')[0],
-        email: credentials.email,
-        role: 'policyholder',
+      setIsAuthenticated(true);
+      
+      // Ensure we capture the MongoDB _id from the response
+      const userProfile = {
+        ...userData.user,
+        id: userData.user._id || userData.user.id || userData.userId
       };
       
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      toast.success('Login successful');
-      setLoading(false);
+      console.log('Setting user profile after login:', userProfile);
+      setUser(userProfile);
       return true;
-    }, 1000);
-    
-    return true; // Return true to allow navigation in component
+    } catch (error) {
+      console.error('Login error in context:', error);
+      setIsAuthenticated(false);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const nomineeLogin = (email, otp) => {
-    // Mock nominee login functionality
-    setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      if (!email || !otp) {
-        toast.error('Please enter both email and OTP');
-        setLoading(false);
-        return false;
-      }
-      
-      // Create mock nominee data
-      const nomineeData = {
-        id: 'nom_' + Math.random().toString(36).substring(2, 9),
-        name: email.split('@')[0],
-        email: email,
-        role: 'nominee',
-      };
-      
-      setUser(nomineeData);
-      setNomineeMode(true);
-      localStorage.setItem('user', JSON.stringify(nomineeData));
-      localStorage.setItem('nomineeMode', 'true');
-      toast.success('Nominee login successful');
-      setLoading(false);
+  const register = async (userData) => {
+    try {
+      setLoading(true);
+      await AuthService.register(userData);
+      toast.success('Registration successful! Please log in.');
       return true;
-    }, 1000);
-    
-    return true;
+    } catch (error) {
+      toast.error(error.message || 'Registration failed');
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
+    AuthService.logout();
     setUser(null);
-    setNomineeMode(false);
-    localStorage.removeItem('user');
-    localStorage.removeItem('nomineeMode');
+    setIsAuthenticated(false);
     toast.info('You have been logged out');
   };
 
-  const value = {
-    user,
-    loading,
-    login,
-    nomineeLogin,
-    logout,
-    isAuthenticated: !!user,
-    nomineeMode,
+  // Add a method to get the authentication token
+  const getToken = () => {
+    return AuthService.getToken();
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        loading,
+        login,
+        register,
+        logout,
+        getToken
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };

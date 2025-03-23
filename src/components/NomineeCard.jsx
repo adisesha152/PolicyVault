@@ -1,11 +1,14 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { UserCog, Mail, Phone, FileText, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PolicyService } from '../services/PolicyService';
+import { toast } from 'sonner';
 
 const NomineeCard = ({ nominee, onVerify, getPolicyName }) => {
+  const [isVerifying, setIsVerifying] = useState(false);
+  
   const statusColor = nominee.verified 
     ? 'bg-green-500' 
     : 'bg-amber-500';
@@ -13,6 +16,20 @@ const NomineeCard = ({ nominee, onVerify, getPolicyName }) => {
   const statusIcon = nominee.verified 
     ? <Check className="h-4 w-4 text-white" /> 
     : <X className="h-4 w-4 text-white" />;
+
+  const handleVerify = async (nomineeId) => {
+    setIsVerifying(true);
+    try {
+      // Use the proper verification endpoint
+      const updatedNominee = await PolicyService.verifyNominee(nomineeId);
+      onVerify(updatedNominee);
+      toast.success('Nominee verified successfully');
+    } catch (error) {
+      toast.error(error.message || 'Failed to verify nominee');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md animate-fade-up">
@@ -79,9 +96,10 @@ const NomineeCard = ({ nominee, onVerify, getPolicyName }) => {
               
               <Button 
                 className="w-full mt-3 bg-insurance-600 hover:bg-insurance-700 text-white"
-                onClick={() => onVerify(nominee.id)}
+                onClick={() => handleVerify(nominee.id)}
+                disabled={isVerifying}
               >
-                Send Verification Email
+                {isVerifying ? 'Sending...' : 'Send Verification Email'}
               </Button>
             </div>
           )}

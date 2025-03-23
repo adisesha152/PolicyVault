@@ -1,24 +1,23 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { DataProvider } from './context/DataContext';
+import { Toaster } from 'sonner';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import NomineeLogin from "./pages/NomineeLogin";
-import Dashboard from "./pages/Dashboard";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
+// Import pages
+import Login from './pages/Login';
+import Registration from './pages/Registration';
+import Dashboard from './pages/Dashboard';
+import ForgotPassword from './pages/ForgotPassword';
+import NotFound from './pages/NotFound';
+import Landing from './pages/Landing';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
   
   if (!isAuthenticated) {
@@ -28,31 +27,56 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+// Redirect to dashboard if already authenticated
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+  
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" />;
+  }
+  
+  return children;
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <DataProvider>
+        <Router>
+          <Toaster position="top-right" richColors />
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/nominee-login" element={<NomineeLogin />} />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/login" element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            } />
+            <Route path="/register" element={
+              <PublicRoute>
+                <Registration />
+              </PublicRoute>
+            } />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            
+            {/* Protected routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+        </Router>
+      </DataProvider>
+    </AuthProvider>
+  );
+}
 
 export default App;

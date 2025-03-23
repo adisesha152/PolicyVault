@@ -1,25 +1,30 @@
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, X, User, LogOut, LayoutDashboard, FileText, Bell, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut, LayoutDashboard, FileText, Bell, Settings, Shield } from 'lucide-react';
 
 const NavbarDashboard = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm py-4">
       <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
-        <Link to="/dashboard" className="flex items-center space-x-2">
+        <Link to="/" className="flex items-center space-x-2">
           <div className="w-10 h-10 rounded-full bg-insurance-600 flex items-center justify-center">
-            <span className="text-white font-bold text-xl">LI</span>
+            <Shield className="h-6 w-6 text-white" />
           </div>
-          <span className="font-semibold text-xl tracking-tight text-insurance-800">LifeInsure</span>
+          <span className="font-semibold text-xl tracking-tight text-insurance-800">PolicyVault</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -28,11 +33,11 @@ const NavbarDashboard = () => {
             <LayoutDashboard size={18} />
             <span>Dashboard</span>
           </Link>
-          <Link to="/policies" className="text-gray-700 hover:text-insurance-600 transition-colors flex items-center gap-1.5">
+          <Link to="/dashboard" className="text-gray-700 hover:text-insurance-600 transition-colors flex items-center gap-1.5">
             <FileText size={18} />
             <span>Policies</span>
           </Link>
-          <Link to="/notifications" className="text-gray-700 hover:text-insurance-600 transition-colors flex items-center gap-1.5">
+          <Link to="/dashboard" className="text-gray-700 hover:text-insurance-600 transition-colors flex items-center gap-1.5">
             <Bell size={18} />
             <span>Notifications</span>
           </Link>
@@ -46,7 +51,7 @@ const NavbarDashboard = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={logout}
+              onClick={handleLogout}
               className="text-gray-600 hover:text-red-600 hover:bg-red-50 flex items-center space-x-1"
             >
               <LogOut size={16} />
@@ -78,15 +83,15 @@ const NavbarDashboard = () => {
               <LayoutDashboard size={18} />
               Dashboard
             </Link>
-            <Link to="/policies" className="text-gray-700 hover:text-insurance-600 py-2 flex items-center gap-2" onClick={closeMenu}>
+            <Link to="/dashboard" className="text-gray-700 hover:text-insurance-600 py-2 flex items-center gap-2" onClick={closeMenu}>
               <FileText size={18} />
               Policies
             </Link>
-            <Link to="/notifications" className="text-gray-700 hover:text-insurance-600 py-2 flex items-center gap-2" onClick={closeMenu}>
+            <Link to="/dashboard" className="text-gray-700 hover:text-insurance-600 py-2 flex items-center gap-2" onClick={closeMenu}>
               <Bell size={18} />
               Notifications
             </Link>
-            <Link to="/settings" className="text-gray-700 hover:text-insurance-600 py-2 flex items-center gap-2" onClick={closeMenu}>
+            <Link to="/dashboard" className="text-gray-700 hover:text-insurance-600 py-2 flex items-center gap-2" onClick={closeMenu}>
               <Settings size={18} />
               Settings
             </Link>
@@ -94,7 +99,7 @@ const NavbarDashboard = () => {
             <Button
               variant="outline"
               onClick={() => {
-                logout();
+                handleLogout();
                 closeMenu();
               }}
               className="text-gray-600 hover:text-red-600 border-gray-300 w-full mt-2 flex items-center justify-center gap-2"

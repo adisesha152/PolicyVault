@@ -1,9 +1,22 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Shield, Calendar, User, DollarSign } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const PolicyCard = ({ policy }) => {
+const PolicyCard = ({ policy, onViewDetails }) => {
+  // Format dates for display
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString();
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  // Get the ID to use in display and operations
+  const id = policy._id || policy.id;
+
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md animate-fade-up">
       <div className="relative">
@@ -33,7 +46,7 @@ const PolicyCard = ({ policy }) => {
               <Calendar className="h-4 w-4 text-gray-400" />
               <div>
                 <p className="text-gray-500">Start Date</p>
-                <p className="font-medium">{policy.startDate}</p>
+                <p className="font-medium">{formatDate(policy.startDate)}</p>
               </div>
             </div>
             
@@ -41,7 +54,7 @@ const PolicyCard = ({ policy }) => {
               <Calendar className="h-4 w-4 text-gray-400" />
               <div>
                 <p className="text-gray-500">End Date</p>
-                <p className="font-medium">{policy.endDate}</p>
+                <p className="font-medium">{formatDate(policy.endDate)}</p>
               </div>
             </div>
             
@@ -49,7 +62,7 @@ const PolicyCard = ({ policy }) => {
               <User className="h-4 w-4 text-gray-400" />
               <div>
                 <p className="text-gray-500">Nominees</p>
-                <p className="font-medium">{policy.nominees}</p>
+                <p className="font-medium">{policy.nominees || 0}</p>
               </div>
             </div>
             
@@ -66,9 +79,14 @@ const PolicyCard = ({ policy }) => {
             <div className="flex justify-between items-center">
               <div className="text-sm">
                 <span className="text-gray-500">Policy ID:</span>
-                <span className="ml-1 font-medium">{policy.id}</span>
+                <span className="ml-1 font-medium">
+                  {typeof id === 'string' && id.length > 8 ? id.substring(0, 8) + '...' : id}
+                </span>
               </div>
-              <button className="text-insurance-600 text-sm font-medium hover:text-insurance-700">
+              <button 
+                className="text-insurance-600 text-sm font-medium hover:text-insurance-700"
+                onClick={() => onViewDetails(id)}
+              >
                 View Details
               </button>
             </div>

@@ -1,13 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Shield } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const NavbarPublic = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  
   const isLandingPage = location.pathname === '/';
 
   useEffect(() => {
@@ -20,6 +23,14 @@ const NavbarPublic = () => {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
+
+  const handleAuth = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
+  };
 
   return (
     <header 
@@ -38,17 +49,28 @@ const NavbarPublic = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="text-gray-700 hover:text-insurance-600 transition-colors">Home</Link>
-          <Link to="/#features" className="text-gray-700 hover:text-insurance-600 transition-colors">Features</Link>
-          <Link to="/#how-it-works" className="text-gray-700 hover:text-insurance-600 transition-colors">How It Works</Link>
-          <Link to="/#about" className="text-gray-700 hover:text-insurance-600 transition-colors">About</Link>
+          <a href={isLandingPage ? "#home" : "/"} className="text-gray-700 hover:text-insurance-600 transition-colors">Home</a>
+          <a href={isLandingPage ? "#features" : "/#features"} className="text-gray-700 hover:text-insurance-600 transition-colors">Features</a>
+          <a href={isLandingPage ? "#how-it-works" : "/#how-it-works"} className="text-gray-700 hover:text-insurance-600 transition-colors">How It Works</a>
+          <a href={isLandingPage ? "#about" : "/#about"} className="text-gray-700 hover:text-insurance-600 transition-colors">About</a>
           
           <div className="flex items-center space-x-4">
-            <Link to="/login">
-              <Button variant="outline" className="border-insurance-600 text-insurance-600 hover:bg-insurance-50">
-                Login
+            <Button 
+              variant="outline" 
+              className="border-insurance-600 text-insurance-600 hover:bg-insurance-50"
+              onClick={handleAuth}
+            >
+              {isAuthenticated ? 'Dashboard' : 'Login'}
+            </Button>
+            
+            {!isAuthenticated && (
+              <Button 
+                className="bg-insurance-600 hover:bg-insurance-700 text-white"
+                onClick={() => navigate('/register')}
+              >
+                Register
               </Button>
-            </Link>
+            )}
           </div>
         </nav>
 
@@ -66,16 +88,35 @@ const NavbarPublic = () => {
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-lg animate-fade-in">
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-            <Link to="/" className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>Home</Link>
-            <Link to="/#features" className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>Features</Link>
-            <Link to="/#how-it-works" className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>How It Works</Link>
-            <Link to="/#about" className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>About</Link>
+            <a href={isLandingPage ? "#home" : "/"} className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>Home</a>
+            <a href={isLandingPage ? "#features" : "/#features"} className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>Features</a>
+            <a href={isLandingPage ? "#how-it-works" : "/#how-it-works"} className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>How It Works</a>
+            <a href={isLandingPage ? "#about" : "/#about"} className="text-gray-700 hover:text-insurance-600 py-2" onClick={closeMenu}>About</a>
             
-            <Link to="/login" className="w-full" onClick={closeMenu}>
-              <Button className="bg-insurance-600 hover:bg-insurance-700 text-white w-full">
-                Login
+            <div className="flex flex-col space-y-3 pt-2">
+              <Button 
+                className="bg-insurance-600 hover:bg-insurance-700 text-white w-full"
+                onClick={() => {
+                  closeMenu();
+                  handleAuth();
+                }}
+              >
+                {isAuthenticated ? 'Dashboard' : 'Login'}
               </Button>
-            </Link>
+              
+              {!isAuthenticated && (
+                <Button 
+                  variant="outline" 
+                  className="border-insurance-600 text-insurance-600 hover:bg-insurance-50 w-full"
+                  onClick={() => {
+                    closeMenu();
+                    navigate('/register');
+                  }}
+                >
+                  Register
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
